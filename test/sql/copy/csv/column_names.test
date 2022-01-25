@@ -56,3 +56,66 @@ SELECT rsID, chr, pos, refb, altb FROM t3
 1090	8	402108	C	G,T
 11	7	11364201	C	T
 1184	6	187649	T	A,C,G
+
+
+# partial column specification not supported if there's no header
+statement error
+CREATE TABLE t4 AS SELECT * FROM read_csv_auto('test/sql/copy/csv/data/test/issue2518.csv', columns={'rsID':'INT', 'chr': 'VARCHAR'});
+
+# partial column specification is ok if there's a header, but column name is case sensitive
+statement error
+CREATE TABLE t5 AS SELECT * FROM read_csv_auto('test/sql/copy/csv/data/test/issue2518_withheader.csv', columns={'rsID':'VARCHAR', 'CHR': 'VARCHAR'});
+
+# partial column specification is ok if there's a header
+statement ok
+CREATE TABLE t6 AS SELECT * FROM read_csv_auto('test/sql/copy/csv/data/test/issue2518_withheader.csv', columns={'rsID':'VARCHAR', 'chr': 'VARCHAR'})
+
+query IIIII
+select * from t6
+----
+4690	1	14673	G	A,C,T
+5	7	91839110	C	T
+6	7	91747131	A	G
+7	7	91779557	T	A
+8	7	92408329	C	T
+9	7	92373453	TG	T
+10	7	92383888	A	C,G,T
+1090	8	402108	C	G,T
+11	7	11364201	C	T
+1184	6	187649	T	A,C,G
+
+query IIIIII
+describe t6;
+----
+rsID	VARCHAR	YES	NULL	NULL	NULL
+chr	VARCHAR	YES	NULL	NULL	NULL
+pos	INTEGER	YES	NULL	NULL	NULL
+refb	VARCHAR	YES	NULL	NULL	NULL
+altb	VARCHAR	YES	NULL	NULL	NULL
+
+# making sure data types for the above query are different with auto
+statement ok
+CREATE TABLE t7 AS SELECT * FROM read_csv_auto('test/sql/copy/csv/data/test/issue2518_withheader.csv', columns={'chr': 'VARCHAR'})
+
+query IIIII
+select * from t7;
+----
+4690	1	14673	G	A,C,T
+5	7	91839110	C	T
+6	7	91747131	A	G
+7	7	91779557	T	A
+8	7	92408329	C	T
+9	7	92373453	TG	T
+10	7	92383888	A	C,G,T
+1090	8	402108	C	G,T
+11	7	11364201	C	T
+1184	6	187649	T	A,C,G
+
+query IIIIII
+describe t7;
+----
+rsID	INTEGER	YES	NULL	NULL	NULL
+chr	VARCHAR	YES	NULL	NULL	NULL
+pos	INTEGER	YES	NULL	NULL	NULL
+refb	VARCHAR	YES	NULL	NULL	NULL
+altb	VARCHAR	YES	NULL	NULL	NULL

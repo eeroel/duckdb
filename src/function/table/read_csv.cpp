@@ -135,12 +135,32 @@ static unique_ptr<FunctionData> ReadCSVBind(ClientContext &context, vector<Value
 	if (options.auto_detect) {
 		options.file_path = result->files[0];
 		auto initial_reader = make_unique<BufferedCSVReader>(context, options);
-
+		auto passed_types = return_types;
 		return_types.assign(initial_reader->sql_types.begin(), initial_reader->sql_types.end());
+
+		// no names passed => use inferred / generated names
 		if (names.empty()) {
 			names.assign(initial_reader->col_names.begin(), initial_reader->col_names.end());
-		} else {
-			D_ASSERT(return_types.size() == names.size());
+		// some names passed and inference found header => replace types for provided columns
+		} else if (initial_reader->options.header) {
+			// override autodetected column types
+			// 1. assert that all col_names have a matching autodetected name
+			// 2. replace entries in return_types with those from the provided columns
+			for (unsigned i=0; i < names.size(); i++) {
+				auto elem = std::find(initial_reader->col_names.begin(), initial_reader->col_names.end(), names[i]);
+				if (elem == initial_reader->col_names.end()) {
+					throw BinderException("Supplied column name %s doesn't match columns auto-detected in the file. Check the column name or try with AUTO_DETECT=FALSE.", names[i]);
+				}
+				auto index = elem - initial_reader->col_names.begin();
+
+				// since the reader will be reused we need to modify its types as well
+				initial_reader->sql_types[index] = passed_types[i];
+				return_types[index] = passed_types[i];
+			}
+			names.assign(initial_reader->col_names.begin(), initial_reader->col_names.end());
+		// some names passed and no header inferred => require all column names provided in order
+		} else if (names.size() != initial_reader->col_names.size()) {
+			throw BinderException("No header was detected, but column type specification was incomplete.");
 		}
 		result->initial_reader = move(initial_reader);
 	} else {
