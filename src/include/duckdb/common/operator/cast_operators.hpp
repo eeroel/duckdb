@@ -410,30 +410,55 @@ DUCKDB_API bool TryCast::Operation(double input, double &result, bool strict);
 //===--------------------------------------------------------------------===//
 // String -> Numeric Casts
 //===--------------------------------------------------------------------===//
+
+
+struct TryCastFromString {
+	template <class SRC, class DST>
+	DUCKDB_API static inline bool Operation(SRC input, DST &result, char decimal_separator, bool strict = false) {
+		throw NotImplementedException("Unimplemented type for cast (%s -> %s)", GetTypeId<SRC>(), GetTypeId<DST>());
+	}
+};
+
+struct CastFromString {
+	template <class SRC, class DST>
+	static inline DST Operation(SRC input) {
+		DST result;
+		if (!TryCastFromString::Operation(input, result, '.')) {
+			throw InvalidInputException(CastExceptionText<SRC, DST>(input));
+		}
+		return result;
+	}
+};
+
 template <>
-DUCKDB_API bool TryCast::Operation(string_t input, bool &result, bool strict);
+DUCKDB_API bool TryCastFromString::Operation(string_t input, bool &result, char decimal_separator, bool strict);
 template <>
-DUCKDB_API bool TryCast::Operation(string_t input, int8_t &result, bool strict);
+DUCKDB_API bool TryCastFromString::Operation(string_t input, int8_t &result, char decimal_separator, bool strict);
 template <>
-DUCKDB_API bool TryCast::Operation(string_t input, int16_t &result, bool strict);
+DUCKDB_API bool TryCastFromString::Operation(string_t input, int16_t &result, char decimal_separator, bool strict);
 template <>
-DUCKDB_API bool TryCast::Operation(string_t input, int32_t &result, bool strict);
+DUCKDB_API bool TryCastFromString::Operation(string_t input, int32_t &result, char decimal_separator, bool strict);
 template <>
-DUCKDB_API bool TryCast::Operation(string_t input, int64_t &result, bool strict);
+DUCKDB_API bool TryCastFromString::Operation(string_t input, int64_t &result, char decimal_separator, bool strict);
 template <>
-DUCKDB_API bool TryCast::Operation(string_t input, uint8_t &result, bool strict);
+DUCKDB_API bool TryCastFromString::Operation(string_t input, uint8_t &result, char decimal_separator, bool strict);
 template <>
-DUCKDB_API bool TryCast::Operation(string_t input, uint16_t &result, bool strict);
+DUCKDB_API bool TryCastFromString::Operation(string_t input, uint16_t &result, char decimal_separator, bool strict);
 template <>
-DUCKDB_API bool TryCast::Operation(string_t input, uint32_t &result, bool strict);
+DUCKDB_API bool TryCastFromString::Operation(string_t input, uint32_t &result, char decimal_separator, bool strict);
 template <>
-DUCKDB_API bool TryCast::Operation(string_t input, uint64_t &result, bool strict);
+DUCKDB_API bool TryCastFromString::Operation(string_t input, uint64_t &result, char decimal_separator, bool strict);
 template <>
-DUCKDB_API bool TryCast::Operation(string_t input, hugeint_t &result, bool strict);
+DUCKDB_API bool TryCastFromString::Operation(string_t input, hugeint_t &result, char decimal_separator, bool strict);
 template <>
-DUCKDB_API bool TryCast::Operation(string_t input, float &result, bool strict);
+DUCKDB_API bool TryCastFromString::Operation(string_t input, float &result, char decimal_separator, bool strict);
 template <>
-DUCKDB_API bool TryCast::Operation(string_t input, double &result, bool strict);
+DUCKDB_API bool TryCastFromString::Operation(string_t input, double &result, char decimal_separator, bool strict);
+
+/*template <>
+DUCKDB_API bool TryCastFromString::Operation(string_t input, string_t &result, char decimal_separator, bool strict);
+*/
+
 
 //===--------------------------------------------------------------------===//
 // Date Casts

@@ -82,33 +82,35 @@ static BoundCastInfo VectorStringCastNumericSwitch(BindCastInput &input, const L
 		}
 	}
 	case LogicalTypeId::BOOLEAN:
-		return BoundCastInfo(&VectorCastHelpers::TryCastStrictLoop<string_t, bool, duckdb::TryCast>);
+		return BoundCastInfo(&VectorCastHelpers::StringToNumericCast<string_t, bool>);
 	case LogicalTypeId::TINYINT:
-		return BoundCastInfo(&VectorCastHelpers::TryCastStrictLoop<string_t, int8_t, duckdb::TryCast>);
+		return BoundCastInfo(&VectorCastHelpers::StringToNumericCast<string_t, int8_t>);
 	case LogicalTypeId::SMALLINT:
-		return BoundCastInfo(&VectorCastHelpers::TryCastStrictLoop<string_t, int16_t, duckdb::TryCast>);
+		return BoundCastInfo(&VectorCastHelpers::StringToNumericCast<string_t, int16_t>);
 	case LogicalTypeId::INTEGER:
-		return BoundCastInfo(&VectorCastHelpers::TryCastStrictLoop<string_t, int32_t, duckdb::TryCast>);
+		return BoundCastInfo(&VectorCastHelpers::StringToNumericCast<string_t, int32_t>);
 	case LogicalTypeId::BIGINT:
-		return BoundCastInfo(&VectorCastHelpers::TryCastStrictLoop<string_t, int64_t, duckdb::TryCast>);
+		return BoundCastInfo(&VectorCastHelpers::StringToNumericCast<string_t, int64_t>);
 	case LogicalTypeId::UTINYINT:
-		return BoundCastInfo(&VectorCastHelpers::TryCastStrictLoop<string_t, uint8_t, duckdb::TryCast>);
+		return BoundCastInfo(&VectorCastHelpers::StringToNumericCast<string_t, uint8_t>);
 	case LogicalTypeId::USMALLINT:
-		return BoundCastInfo(&VectorCastHelpers::TryCastStrictLoop<string_t, uint16_t, duckdb::TryCast>);
+		return BoundCastInfo(&VectorCastHelpers::StringToNumericCast<string_t, uint16_t>);
 	case LogicalTypeId::UINTEGER:
-		return BoundCastInfo(&VectorCastHelpers::TryCastStrictLoop<string_t, uint32_t, duckdb::TryCast>);
+		return BoundCastInfo(&VectorCastHelpers::StringToNumericCast<string_t, uint32_t>);
 	case LogicalTypeId::UBIGINT:
-		return BoundCastInfo(&VectorCastHelpers::TryCastStrictLoop<string_t, uint64_t, duckdb::TryCast>);
+		return BoundCastInfo(&VectorCastHelpers::StringToNumericCast<string_t, uint64_t>);
 	case LogicalTypeId::HUGEINT:
-		return BoundCastInfo(&VectorCastHelpers::TryCastStrictLoop<string_t, hugeint_t, duckdb::TryCast>);
+		return BoundCastInfo(&VectorCastHelpers::StringToNumericCast<string_t, hugeint_t>);
 	case LogicalTypeId::FLOAT:
-		return BoundCastInfo(&VectorCastHelpers::TryCastStrictLoop<string_t, float, duckdb::TryCast>);
+		//return BoundCastInfo(&VectorCastHelpers::TryCastStrictLoop<string_t, float, duckdb::TryCast>);
+		return BoundCastInfo(&VectorCastHelpers::StringToNumericCast<string_t, float>);
 	case LogicalTypeId::DOUBLE:
-		return BoundCastInfo(&VectorCastHelpers::TryCastStrictLoop<string_t, double, duckdb::TryCast>);
+		//return BoundCastInfo(&VectorCastHelpers::TryCastStrictLoop<string_t, double, duckdb::TryCast>);
+		return BoundCastInfo(&VectorCastHelpers::StringToNumericCast<string_t, double>);
 	case LogicalTypeId::INTERVAL:
 		return BoundCastInfo(&VectorCastHelpers::TryCastErrorLoop<string_t, interval_t, duckdb::TryCastErrorMessage>);
 	case LogicalTypeId::DECIMAL:
-		return BoundCastInfo(&VectorCastHelpers::ToDecimalCast<string_t>);
+		return BoundCastInfo(&VectorCastHelpers::StringToDecimalCast);
 	default:
 		return DefaultCasts::TryVectorNullCast;
 	}

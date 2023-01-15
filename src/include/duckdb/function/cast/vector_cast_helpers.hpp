@@ -98,14 +98,43 @@ struct VectorTryCastStringOperator {
 };
 
 struct VectorDecimalCastData {
-	VectorDecimalCastData(string *error_message_p, uint8_t width_p, uint8_t scale_p)
-	    : error_message(error_message_p), width(width_p), scale(scale_p) {
+	// TODO good to hardcode decimal sep here?
+	VectorDecimalCastData(string *error_message_p, uint8_t width_p, uint8_t scale_p, char decimal_separator = '.')
+	    : error_message(error_message_p), width(width_p), scale(scale_p), decimal_separator(decimal_separator) {
 	}
 
 	string *error_message;
 	uint8_t width;
 	uint8_t scale;
+	char decimal_separator;
 	bool all_converted = true;
+};
+
+struct VectorStringToNumericCastData {
+	VectorStringToNumericCastData(string *error_message_p, char decimal_separator, bool strict)
+	    : error_message(error_message_p), decimal_separator(decimal_separator), strict(strict) {
+	}
+
+	string *error_message;
+	char decimal_separator;
+	bool strict = false;
+	bool all_converted = true;
+};
+
+template <class OP>
+struct VectorStringToDecimalCastOperator {
+	// TODO: can this be specialized?
+	template <class INPUT_TYPE, class RESULT_TYPE>
+	static RESULT_TYPE Operation(INPUT_TYPE input, ValidityMask &mask, idx_t idx, void *dataptr) {
+		auto data = (VectorDecimalCastData *)dataptr;
+		RESULT_TYPE result_value;
+		if (!OP::template Operation<INPUT_TYPE, RESULT_TYPE>(input, result_value, data->error_message, data->width,
+		                                                     data->scale, data->decimal_separator)) {
+			return HandleVectorCastError::Operation<RESULT_TYPE>("Failed to cast decimal value", mask, idx,
+			                                                     data->error_message, data->all_converted);
+		}
+		return result_value;
+	}
 };
 
 template <class OP>
@@ -118,6 +147,20 @@ struct VectorDecimalCastOperator {
 		                                                     data->scale)) {
 			return HandleVectorCastError::Operation<RESULT_TYPE>("Failed to cast decimal value", mask, idx,
 			                                                     data->error_message, data->all_converted);
+		}
+		return result_value;
+	}
+};
+
+template <class OP>
+struct VectorStringToNumericCastOperator {
+	template <class INPUT_TYPE, class RESULT_TYPE>
+	static RESULT_TYPE Operation(INPUT_TYPE input, ValidityMask &mask, idx_t idx, void *dataptr) {
+		auto data = (VectorStringToNumericCastData *)dataptr;
+		RESULT_TYPE result_value;
+		if (!OP::template Operation<INPUT_TYPE, RESULT_TYPE>(input, result_value, data->decimal_separator, data->strict)) {
+			return HandleVectorCastError::Operation<RESULT_TYPE>(CastExceptionText<INPUT_TYPE, RESULT_TYPE>(input), mask,
+		                                                     idx, data->error_message, data->all_converted);
 		}
 		return result_value;
 	}
@@ -174,6 +217,23 @@ struct VectorCastHelpers {
 		return input.all_converted;
 	}
 
+	template <class SRC, class T, class OP>
+	static bool TemplatedStringToDecimalCast(Vector &source, Vector &result, idx_t count, string *error_message, uint8_t width,
+	                                 uint8_t scale, char decimal_separator) {
+		VectorDecimalCastData input(error_message, width, scale, decimal_separator);
+		UnaryExecutor::GenericExecute<SRC, T, VectorStringToDecimalCastOperator<OP>>(source, result, count, (void *)&input,
+		                                                                     error_message);
+		return input.all_converted;
+	}
+
+	template <class SRC, class T, class OP>
+	static bool TemplatedStringToNumericCast(Vector &source, Vector &result, idx_t count, string *error_message, char decimal_separator, bool strict) {
+		VectorStringToNumericCastData input(error_message, decimal_separator, strict);
+		UnaryExecutor::GenericExecute<SRC, T, VectorStringToNumericCastOperator<OP>>(source, result, count, (void *)&input,
+		                                                                     error_message);
+		return input.all_converted;
+	}
+
 	template <class T>
 	static bool ToDecimalCast(Vector &source, Vector &result, idx_t count, CastParameters &parameters) {
 		auto &result_type = result.GetType();
@@ -195,6 +255,34 @@ struct VectorCastHelpers {
 		default:
 			throw InternalException("Unimplemented internal type for decimal");
 		}
+	}
+
+	static bool StringToDecimalCast(Vector &source, Vector &result, idx_t count, CastParameters &parameters) {
+		auto &result_type = result.GetType();
+		auto width = DecimalType::GetWidth(result_type);
+		auto scale = DecimalType::GetScale(result_type);
+		switch (result_type.InternalType()) {
+		case PhysicalType::INT16:
+			return TemplatedStringToDecimalCast<string_t, int16_t, TryCastStringToDecimal>(source, result, count, parameters.error_message,
+			                                                          width, scale, parameters.decimal_separator);
+		case PhysicalType::INT32:
+			return TemplatedStringToDecimalCast<string_t, int32_t, TryCastStringToDecimal>(source, result, count, parameters.error_message,
+			                                                          width, scale, parameters.decimal_separator);
+		case PhysicalType::INT64:
+			return TemplatedStringToDecimalCast<string_t, int64_t, TryCastStringToDecimal>(source, result, count, parameters.error_message,
+			                                                          width, scale, parameters.decimal_separator);
+		case PhysicalType::INT128:
+			return TemplatedStringToDecimalCast<string_t, hugeint_t, TryCastStringToDecimal>(source, result, count, parameters.error_message,
+			                                                            width, scale, parameters.decimal_separator);
+		default:
+			throw InternalException("Unimplemented internal type for decimal");
+		}
+	}
+
+	template <class T, class DST>
+	static bool StringToNumericCast(Vector &source, Vector &result, idx_t count, CastParameters &parameters) {
+		return TemplatedStringToNumericCast<T, DST, TryCastFromString>(source, result, count, parameters.error_message,
+			                                                            parameters.decimal_separator, parameters.strict);
 	}
 };
 

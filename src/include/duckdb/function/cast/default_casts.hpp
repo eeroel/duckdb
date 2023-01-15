@@ -32,8 +32,11 @@ struct CastParameters {
 	CastParameters(BoundCastData *cast_data, bool strict, string *error_message)
 	    : cast_data(cast_data), strict(strict), error_message(error_message) {
 	}
+	CastParameters(BoundCastData *cast_data, bool strict, string *error_message, char decimal_separator)
+	    : cast_data(cast_data), strict(strict), error_message(error_message), decimal_separator(decimal_separator) {
+	}
 	CastParameters(CastParameters &parent, BoundCastData *cast_data = nullptr)
-	    : cast_data(cast_data), strict(parent.strict), error_message(parent.error_message) {
+	    : cast_data(cast_data), strict(parent.strict), error_message(parent.error_message), decimal_separator(parent.decimal_separator) {
 	}
 
 	//! The bound cast data (if any)
@@ -42,6 +45,9 @@ struct CastParameters {
 	bool strict = false;
 	// out: error message in case cast has failed
 	string *error_message = nullptr;
+	// for string -> numeric casts
+	char decimal_separator = '.';
+	
 };
 
 typedef bool (*cast_function_t)(Vector &source, Vector &result, idx_t count, CastParameters &parameters);

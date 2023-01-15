@@ -32,7 +32,7 @@ unique_ptr<CreateStatement> Transformer::TransformCreateSequence(duckdb_libpgque
 				if (val->type == duckdb_libpgquery::T_PGInteger) {
 					opt_value = val->val.ival;
 				} else if (val->type == duckdb_libpgquery::T_PGFloat) {
-					if (!TryCast::Operation<string_t, int64_t>(string_t(val->val.str), opt_value, true)) {
+					if (!TryCastFromString::Operation<string_t, int64_t>(string_t(val->val.str), opt_value, true)) {
 						throw ParserException("Expected an integer argument for option %s", opt_name);
 					}
 				} else {

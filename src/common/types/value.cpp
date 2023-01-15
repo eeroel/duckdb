@@ -838,7 +838,7 @@ T Value::GetValueInternal() const {
 	case LogicalTypeId::DOUBLE:
 		return Cast::Operation<double, T>(value_.double_);
 	case LogicalTypeId::VARCHAR:
-		return Cast::Operation<string_t, T>(str_value.c_str());
+		return CastFromString::Operation<string_t, T>(str_value.c_str());
 	case LogicalTypeId::INTERVAL:
 		return Cast::Operation<interval_t, T>(value_.interval);
 	case LogicalTypeId::DECIMAL:
@@ -1512,14 +1512,96 @@ bool Value::operator>=(const int64_t &rhs) const {
 }
 
 bool Value::TryCastAs(CastFunctionSet &set, GetCastFunctionInput &get_input, const LogicalType &target_type,
-                      Value &new_value, string *error_message, bool strict) const {
+                      Value &new_value, string *error_message, bool strict, char decimal_separator) const {
 	if (type_ == target_type) {
 		new_value = Copy();
 		return true;
 	}
 	Vector input(*this);
 	Vector result(target_type);
-	if (!VectorOperations::TryCast(set, get_input, input, result, 1, error_message, strict)) {
+
+	if (!VectorOperations::TryCast(set, get_input, input, result, 1, error_message, strict, decimal_separator)) {
+		return false;
+	}
+
+	new_value = result.GetValue(0);
+	return true;
+}
+
+bool Value::TryCastAs(ClientContext &context, const LogicalType &target_type, Value &new_value, string *error_message,
+                    bool strict, char decimal_separator) const {
+	GetCastFunctionInput get_input(context);
+	return TryCastAs(CastFunctionSet::Get(context), get_input, target_type, new_value, error_message, strict, decimal_separator);
+}
+
+bool Value::DefaultTryCastAs(const LogicalType &target_type, Value &new_value, string *error_message,
+                             bool strict, char decimal_separator) const {
+	CastFunctionSet set;
+	GetCastFunctionInput get_input;
+	return TryCastAs(set, get_input, target_type, new_value, error_message, strict, decimal_separator);
+}
+
+Value Value::CastAs(CastFunctionSet &set, GetCastFunctionInput &get_input, const LogicalType &target_type,
+                    bool strict, char decimal_separator) const {
+	Value new_value;
+	string error_message;
+	if (!TryCastAs(set, get_input, target_type, new_value, &error_message, strict, decimal_separator)) {
+		throw InvalidInputException("Failed to cast value: %s", error_message);
+	}
+	return new_value;
+}
+
+Value Value::CastAs(ClientContext &context, const LogicalType &target_type, bool strict, char decimal_separator) const {
+	GetCastFunctionInput get_input(context);
+	return CastAs(CastFunctionSet::Get(context), get_input, target_type, strict, decimal_separator);
+}
+
+Value Value::DefaultCastAs(const LogicalType &target_type, bool strict, char decimal_separator) const {
+	CastFunctionSet set;
+	GetCastFunctionInput get_input;
+	return CastAs(set, get_input, target_type, strict, decimal_separator);
+}
+
+bool Value::TryCastAs(CastFunctionSet &set, GetCastFunctionInput &get_input, const LogicalType &target_type,
+                      bool strict, char decimal_separator) {
+	Value new_value;
+	string error_message;
+	
+	if (!TryCastAs(set, get_input, target_type, new_value, &error_message, strict, decimal_separator)) {
+		return false;
+	}
+	type_ = target_type;
+	is_null = new_value.is_null;
+	value_ = new_value.value_;
+	str_value = new_value.str_value;
+	struct_value = new_value.struct_value;
+	list_value = new_value.list_value;
+	return true;
+}
+
+bool Value::TryCastAs(ClientContext &context, const LogicalType &target_type, bool strict, char decimal_separator) {
+	GetCastFunctionInput get_input(context);
+	return TryCastAs(CastFunctionSet::Get(context), get_input, target_type, strict, decimal_separator);
+}
+
+bool Value::DefaultTryCastAs(const LogicalType &target_type, bool strict, char decimal_separator) {
+	CastFunctionSet set;
+	GetCastFunctionInput get_input;
+	return TryCastAs(set, get_input, target_type, strict, decimal_separator);
+}
+
+// overloads
+
+/*
+bool Value::TryCastAs(CastFunctionSet &set, GetCastFunctionInput &get_input, const LogicalType &target_type,
+                      Value &new_value, string *error_message, char decimal_separator, bool strict) const {
+	if (type_ == target_type) {
+		new_value = Copy();
+		return true;
+	}
+	Vector input(*this);
+	Vector result(target_type);
+	if (!VectorOperations::TryCast(set, get_input, input, result, 1, error_message, decimal_separator, strict)) {
 		return false;
 	}
 	new_value = result.GetValue(0);
@@ -1527,41 +1609,41 @@ bool Value::TryCastAs(CastFunctionSet &set, GetCastFunctionInput &get_input, con
 }
 
 bool Value::TryCastAs(ClientContext &context, const LogicalType &target_type, Value &new_value, string *error_message,
-                      bool strict) const {
+                      char decimal_separator, bool strict) const {
 	GetCastFunctionInput get_input(context);
-	return TryCastAs(CastFunctionSet::Get(context), get_input, target_type, new_value, error_message, strict);
+	return TryCastAs(CastFunctionSet::Get(context), get_input, target_type, new_value, error_message, decimal_separator, strict);
 }
 
-bool Value::DefaultTryCastAs(const LogicalType &target_type, Value &new_value, string *error_message,
+bool Value::DefaultTryCastAs(const LogicalType &target_type, Value &new_value, string *error_message, char decimal_separator,
                              bool strict) const {
 	CastFunctionSet set;
 	GetCastFunctionInput get_input;
-	return TryCastAs(set, get_input, target_type, new_value, error_message, strict);
+	return TryCastAs(set, get_input, target_type, new_value, error_message, decimal_separator, strict);
 }
 
 Value Value::CastAs(CastFunctionSet &set, GetCastFunctionInput &get_input, const LogicalType &target_type,
-                    bool strict) const {
+                    char decimal_separator, bool strict) const {
 	Value new_value;
 	string error_message;
-	if (!TryCastAs(set, get_input, target_type, new_value, &error_message, strict)) {
+	if (!TryCastAs(set, get_input, target_type, new_value, &error_message, decimal_separator, strict)) {
 		throw InvalidInputException("Failed to cast value: %s", error_message);
 	}
 	return new_value;
 }
 
-Value Value::CastAs(ClientContext &context, const LogicalType &target_type, bool strict) const {
+Value Value::CastAs(ClientContext &context, const LogicalType &target_type, char decimal_separator, bool strict) const {
 	GetCastFunctionInput get_input(context);
-	return CastAs(CastFunctionSet::Get(context), get_input, target_type, strict);
+	return CastAs(CastFunctionSet::Get(context), get_input, target_type, decimal_separator, strict);
 }
 
-Value Value::DefaultCastAs(const LogicalType &target_type, bool strict) const {
+Value Value::DefaultCastAs(const LogicalType &target_type, char decimal_separator,  bool strict) const {
 	CastFunctionSet set;
 	GetCastFunctionInput get_input;
-	return CastAs(set, get_input, target_type, strict);
+	return CastAs(set, get_input, target_type, decimal_separator, strict);
 }
 
 bool Value::TryCastAs(CastFunctionSet &set, GetCastFunctionInput &get_input, const LogicalType &target_type,
-                      bool strict) {
+                      char decimal_separator, bool strict) {
 	Value new_value;
 	string error_message;
 	if (!TryCastAs(set, get_input, target_type, new_value, &error_message, strict)) {
@@ -1576,16 +1658,16 @@ bool Value::TryCastAs(CastFunctionSet &set, GetCastFunctionInput &get_input, con
 	return true;
 }
 
-bool Value::TryCastAs(ClientContext &context, const LogicalType &target_type, bool strict) {
+bool Value::TryCastAs(ClientContext &context, const LogicalType &target_type, char decimal_separator, bool strict) {
 	GetCastFunctionInput get_input(context);
-	return TryCastAs(CastFunctionSet::Get(context), get_input, target_type, strict);
+	return TryCastAs(CastFunctionSet::Get(context), get_input, target_type, decimal_separator, strict);
 }
 
-bool Value::DefaultTryCastAs(const LogicalType &target_type, bool strict) {
+bool Value::DefaultTryCastAs(const LogicalType &target_type, char decimal_separator, bool strict) {
 	CastFunctionSet set;
 	GetCastFunctionInput get_input;
 	return TryCastAs(set, get_input, target_type, strict);
-}
+}*/
 
 void Value::Serialize(Serializer &main_serializer) const {
 	FieldWriter writer(main_serializer);

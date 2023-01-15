@@ -371,15 +371,15 @@ SQLRETURN duckdb::GetDataStmtResult(SQLHSTMT statement_handle, SQLUSMALLINT col_
 			string_t str_t(str_val.c_str(), width);
 			if (numeric->precision <= Decimal::MAX_WIDTH_INT64) {
 				int64_t val_i64;
-				if (!duckdb::TryCast::Operation(str_t, val_i64)) {
+				if (!duckdb::TryCastFromString::Operation(str_t, val_i64)) {
 					return SQL_ERROR;
 				}
 				memcpy(dataptr, &val_i64, sizeof(val_i64));
 			} else {
 				hugeint_t huge_int;
 				string error_message;
-				if (!duckdb::TryCastToDecimal::Operation<string_t, hugeint_t>(str_t, huge_int, &error_message,
-				                                                              numeric->precision, numeric->scale)) {
+				if (!duckdb::TryCastStringToDecimal::Operation<string_t, hugeint_t>(str_t, huge_int, &error_message,
+				                                                              numeric->precision, numeric->scale, '.')) {
 					return SQL_ERROR;
 				}
 				memcpy(dataptr, &huge_int.lower, sizeof(huge_int.lower));

@@ -91,7 +91,7 @@ bool BaseCSVReader::TryCastValue(const Value &value, const LogicalType &sql_type
 	} else {
 		Value new_value;
 		string error_message;
-		return value.DefaultTryCastAs(sql_type, new_value, &error_message, true);
+		return value.DefaultTryCastAs(sql_type, new_value, &error_message, true, options.decimal_separator);
 	}
 }
 
@@ -149,7 +149,7 @@ bool BaseCSVReader::TryCastVector(Vector &parse_chunk_col, idx_t size, const Log
 	} else {
 		// target type is not varchar: perform a cast
 		string error_message;
-		return VectorOperations::DefaultTryCast(parse_chunk_col, dummy_result, size, &error_message, true);
+		return VectorOperations::DefaultTryCast(parse_chunk_col, dummy_result, size, &error_message, true, options.decimal_separator);
 	}
 }
 

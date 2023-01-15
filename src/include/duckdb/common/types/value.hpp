@@ -206,21 +206,21 @@ public:
 
 	//! Cast this value to another type, throws exception if its not possible
 	DUCKDB_API Value CastAs(CastFunctionSet &set, GetCastFunctionInput &get_input, const LogicalType &target_type,
-	                        bool strict = false) const;
-	DUCKDB_API Value CastAs(ClientContext &context, const LogicalType &target_type, bool strict = false) const;
-	DUCKDB_API Value DefaultCastAs(const LogicalType &target_type, bool strict = false) const;
+	                        bool strict = false, char decimal_separator = '.') const;
+	DUCKDB_API Value CastAs(ClientContext &context, const LogicalType &target_type, bool strict = false, char decimal_separator = '.') const;
+	DUCKDB_API Value DefaultCastAs(const LogicalType &target_type, bool strict = false, char decimal_separator = '.') const;
 	//! Tries to cast this value to another type, and stores the result in "new_value"
 	DUCKDB_API bool TryCastAs(CastFunctionSet &set, GetCastFunctionInput &get_input, const LogicalType &target_type,
-	                          Value &new_value, string *error_message, bool strict = false) const;
+	                          Value &new_value, string *error_message, bool strict = false, char decimal_separator = '.') const;
 	DUCKDB_API bool TryCastAs(ClientContext &context, const LogicalType &target_type, Value &new_value,
-	                          string *error_message, bool strict = false) const;
+	                          string *error_message, bool strict = false, char decimal_separator = '.') const;
 	DUCKDB_API bool DefaultTryCastAs(const LogicalType &target_type, Value &new_value, string *error_message,
-	                                 bool strict = false) const;
+	                                 bool strict = false, char decimal_separator = '.') const;
 	//! Tries to cast this value to another type, and stores the result in THIS value again
 	DUCKDB_API bool TryCastAs(CastFunctionSet &set, GetCastFunctionInput &get_input, const LogicalType &target_type,
-	                          bool strict = false);
-	DUCKDB_API bool TryCastAs(ClientContext &context, const LogicalType &target_type, bool strict = false);
-	DUCKDB_API bool DefaultTryCastAs(const LogicalType &target_type, bool strict = false);
+	                          bool strict = false, char decimal_separator = '.');
+	DUCKDB_API bool TryCastAs(ClientContext &context, const LogicalType &target_type, bool strict = false, char decimal_separator = '.');
+	DUCKDB_API bool DefaultTryCastAs(const LogicalType &target_type, bool strict = false, char decimal_separator = '.');
 
 	//! Serializes a Value to a stand-alone binary blob
 	DUCKDB_API void Serialize(Serializer &serializer) const;

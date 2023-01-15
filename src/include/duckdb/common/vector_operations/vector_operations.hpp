@@ -158,15 +158,16 @@ struct VectorOperations {
 	//! NULLs. If any elements cannot be converted, returns false and fills in the error_message. If no error message is
 	//! provided, an exception is thrown instead.
 	DUCKDB_API static bool TryCast(CastFunctionSet &set, GetCastFunctionInput &input, Vector &source, Vector &result,
-	                               idx_t count, string *error_message, bool strict = false);
+	                               idx_t count, string *error_message, bool strict = false, char decimal_separator = '.');
+
 	DUCKDB_API static bool DefaultTryCast(Vector &source, Vector &result, idx_t count, string *error_message,
-	                                      bool strict = false);
+	                                      bool strict = false, char decimal_separator = '.');
 	DUCKDB_API static bool TryCast(ClientContext &context, Vector &source, Vector &result, idx_t count,
-	                               string *error_message, bool strict = false);
+	                               string *error_message, bool strict = false, char decimal_separator = '.');
 	//! Cast the data from the source type to the target type. Throws an exception if the cast fails.
 	DUCKDB_API static void Cast(ClientContext &context, Vector &source, Vector &result, idx_t count,
-	                            bool strict = false);
-	DUCKDB_API static void DefaultCast(Vector &source, Vector &result, idx_t count, bool strict = false);
+	                            bool strict = false, char decimal_separator = '.');
+	DUCKDB_API static void DefaultCast(Vector &source, Vector &result, idx_t count, bool strict = false, char decimal_separator = '.');
 
 	// Copy the data of <source> to the target vector
 	static void Copy(const Vector &source, Vector &target, idx_t source_count, idx_t source_offset,

@@ -34,13 +34,13 @@ unique_ptr<ConstantExpression> Transformer::TransformValue(duckdb_libpgquery::PG
 		if (try_cast_as_integer) {
 			int64_t bigint_value;
 			// try to cast as bigint first
-			if (TryCast::Operation<string_t, int64_t>(str_val, bigint_value)) {
+			if (TryCastFromString::Operation<string_t, int64_t>(str_val, bigint_value, '.')) {
 				// successfully cast to bigint: bigint value
 				return make_unique<ConstantExpression>(Value::BIGINT(bigint_value));
 			}
 			hugeint_t hugeint_value;
 			// if that is not successful; try to cast as hugeint
-			if (TryCast::Operation<string_t, hugeint_t>(str_val, hugeint_value)) {
+			if (TryCastFromString::Operation<string_t, hugeint_t>(str_val, hugeint_value, '.')) {
 				// successfully cast to bigint: bigint value
 				return make_unique<ConstantExpression>(Value::HUGEINT(hugeint_value));
 			}
@@ -62,8 +62,9 @@ unique_ptr<ConstantExpression> Transformer::TransformValue(duckdb_libpgquery::PG
 			}
 		}
 		// if there is a decimal or the value is too big to cast as either hugeint or bigint
-		double dbl_value = Cast::Operation<string_t, double>(str_val);
-		return make_unique<ConstantExpression>(Value::DOUBLE(dbl_value));
+		Value val = Value(str_val);
+		val = val.DefaultCastAs(LogicalType::DOUBLE);
+		return make_unique<ConstantExpression>(std::move(val));
 	}
 	case duckdb_libpgquery::T_PGNull:
 		return make_unique<ConstantExpression>(Value(LogicalType::SQLNULL));

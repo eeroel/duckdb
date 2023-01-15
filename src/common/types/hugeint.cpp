@@ -504,7 +504,7 @@ template <>
 bool Hugeint::TryConvert(const char *value, hugeint_t &result) {
 	auto len = strlen(value);
 	string_t string_val(value, len);
-	return TryCast::Operation<string_t, hugeint_t>(string_val, result, true);
+	return TryCastFromString::Operation<string_t, hugeint_t>(string_val, result, '.', true);
 }
 
 template <>

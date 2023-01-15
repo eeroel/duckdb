@@ -99,7 +99,7 @@ interval_parse_number:
 			}
 			// finished the number, parse it from the string
 			string_t nr_string(str + start_pos, pos - start_pos);
-			number = Cast::Operation<string_t, int64_t>(nr_string);
+			number = CastFromString::Operation<string_t, int64_t>(nr_string);
 			if (negative) {
 				number = -number;
 			}

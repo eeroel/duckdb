@@ -51,8 +51,9 @@ static void TestStringCast(vector<string> &working_values, vector<DST> &expected
 	for (idx_t i = 0; i < working_values.size(); i++) {
 		auto &value = working_values[i];
 		auto expected_value = expected_values[i];
-		REQUIRE_NOTHROW(Cast::Operation<string_t, DST>(string_t(value)) == expected_value);
-		REQUIRE(TryCast::Operation<string_t, DST>(string_t(value), result));
+		REQUIRE_NOTHROW(CastFromString::Operation<string_t, DST>(string_t(value)) == expected_value);
+
+		REQUIRE(TryCastFromString::Operation<string_t, DST>(string_t(value), result, '.'));
 		REQUIRE(result == expected_value);
 
 		StringUtil::Trim(value);
@@ -66,7 +67,7 @@ static void TestStringCast(vector<string> &working_values, vector<DST> &expected
 	}
 	for (auto &value : broken_values) {
 		REQUIRE_THROWS(Cast::Operation<string_t, DST>(string_t(value)));
-		REQUIRE(!TryCast::Operation<string_t, DST>(string_t(value), result));
+		REQUIRE(!TryCastFromString::Operation<string_t, DST>(string_t(value), result, '.'));
 	}
 }
 
@@ -80,10 +81,10 @@ static void TestExponent() {
 		if (value < (double)NumericLimits<T>::Maximum()) {
 			// expect success
 			str = "1e" + to_string(exponent);
-			REQUIRE(TryCast::Operation<string_t, T>(string_t(str), parse_result));
+			REQUIRE(TryCastFromString::Operation<string_t, T>(string_t(str), parse_result, '.'));
 			REQUIRE(parse_result == expected_value);
 			str = "-1e" + to_string(exponent);
-			REQUIRE(TryCast::Operation<string_t, T>(string_t(str), parse_result));
+			REQUIRE(TryCastFromString::Operation<string_t, T>(string_t(str), parse_result, '.'));
 			REQUIRE(parse_result == -expected_value);
 			value *= 10;
 			// check again because otherwise this overflows
@@ -93,9 +94,9 @@ static void TestExponent() {
 		} else {
 			// expect failure
 			str = "1e" + to_string(exponent);
-			REQUIRE(!TryCast::Operation<string_t, T>(string_t(str), parse_result));
+			REQUIRE(!TryCastFromString::Operation<string_t, T>(string_t(str), parse_result, '.'));
 			str = "-1e" + to_string(exponent);
-			REQUIRE(!TryCast::Operation<string_t, T>(string_t(str), parse_result));
+			REQUIRE(!TryCastFromString::Operation<string_t, T>(string_t(str), parse_result, '.'));
 		}
 	}
 }
@@ -109,13 +110,13 @@ TEST_CASE("Test casting to boolean", "[cast]") {
 	for (idx_t i = 0; i < working_values.size(); i++) {
 		auto &value = working_values[i];
 		auto expected_value = expected_values[i];
-		REQUIRE_NOTHROW(Cast::Operation<string_t, bool>(value) == expected_value);
-		REQUIRE(TryCast::Operation<string_t, bool>(value, result));
+		REQUIRE_NOTHROW(CastFromString::Operation<string_t, bool>(value) == expected_value);
+		REQUIRE(TryCastFromString::Operation<string_t, bool>(value, result, '.'));
 		REQUIRE(result == expected_value);
 	}
 	for (auto &value : broken_values) {
-		REQUIRE_THROWS(Cast::Operation<string_t, bool>(value));
-		REQUIRE(!TryCast::Operation<string_t, bool>(value, result));
+		REQUIRE_THROWS(CastFromString::Operation<string_t, bool>(value));
+		REQUIRE(!TryCastFromString::Operation<string_t, bool>(value, result, '.'));
 	}
 }
 
@@ -270,17 +271,17 @@ static void TestStringCastDouble(vector<string> &working_values, vector<DST> &ex
 	for (idx_t i = 0; i < working_values.size(); i++) {
 		auto &value = working_values[i];
 		auto expected_value = expected_values[i];
-		REQUIRE_NOTHROW(Cast::Operation<string_t, DST>(string_t(value)) == expected_value);
-		REQUIRE(TryCast::Operation<string_t, DST>(string_t(value), result));
+		REQUIRE_NOTHROW(CastFromString::Operation<string_t, DST>(string_t(value)) == expected_value);
+		REQUIRE(TryCastFromString::Operation<string_t, DST>(string_t(value), result, '.'));
 		REQUIRE(ApproxEqual(result, expected_value));
 
 		auto to_str_and_back =
-		    Cast::Operation<string_t, DST>(string_t(ConvertToString::Operation<DST>(expected_value)));
+		    CastFromString::Operation<string_t, DST>(string_t(ConvertToString::Operation<DST>(expected_value)));
 		REQUIRE(ApproxEqual(to_str_and_back, expected_value));
 	}
 	for (auto &value : broken_values) {
 		REQUIRE_THROWS(Cast::Operation<string_t, DST>(string_t(value)));
-		REQUIRE(!TryCast::Operation<string_t, DST>(string_t(value), result));
+		REQUIRE(!TryCastFromString::Operation<string_t, DST>(string_t(value), result, '.'));
 	}
 }
 

@@ -90,7 +90,15 @@ void BaseAppender::EndRow() {
 
 template <class SRC, class DST>
 void BaseAppender::AppendValueInternal(Vector &col, SRC input) {
-	FlatVector::GetData<DST>(col)[chunk.size()] = Cast::Operation<SRC, DST>(input);
+	if (std::is_same<SRC, string_t>() && !(
+		std::is_same<DST, date_t>() || std::is_same<DST, dtime_t>() ||
+		std::is_same<DST, time_t>() || std::is_same<DST, timestamp_t>() ||
+		std::is_same<DST, interval_t>()
+	)) {
+		FlatVector::GetData<DST>(col)[chunk.size()] = CastFromString::Operation<SRC, DST>(input, '.');
+	} else {
+		FlatVector::GetData<DST>(col)[chunk.size()] = Cast::Operation<SRC, DST>(input);
+	}
 }
 
 template <class SRC, class DST>
@@ -101,8 +109,13 @@ void BaseAppender::AppendDecimalValueInternal(Vector &col, SRC input) {
 		D_ASSERT(type.id() == LogicalTypeId::DECIMAL);
 		auto width = DecimalType::GetWidth(type);
 		auto scale = DecimalType::GetScale(type);
-		TryCastToDecimal::Operation<SRC, DST>(input, FlatVector::GetData<DST>(col)[chunk.size()], nullptr, width,
-		                                      scale);
+		if (std::is_same<SRC, string_t>()) {
+			TryCastStringToDecimal::Operation<SRC, DST>(input, FlatVector::GetData<DST>(col)[chunk.size()], nullptr, width,
+												scale, '.');
+		} else {
+			TryCastToDecimal::Operation<SRC, DST>(input, FlatVector::GetData<DST>(col)[chunk.size()], nullptr, width,
+										scale);
+		}
 		return;
 	}
 	case AppenderType::PHYSICAL: {

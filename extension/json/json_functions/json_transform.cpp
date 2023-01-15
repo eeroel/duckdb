@@ -75,14 +75,14 @@ static inline string_t GetString(yyjson_val *val) {
 	return string_t(unsafe_yyjson_get_str(val), unsafe_yyjson_get_len(val));
 }
 
-template <class T, class OP = TryCast>
+template <class T>
 static inline bool GetValueNumerical(yyjson_val *val, T &result, bool strict) {
 	bool success;
 	switch (yyjson_get_tag(val)) {
 	case YYJSON_TYPE_NULL | YYJSON_SUBTYPE_NONE:
 		return false;
 	case YYJSON_TYPE_STR | YYJSON_SUBTYPE_NONE:
-		success = OP::template Operation<string_t, T>(GetString(val), result, strict);
+		success = TryCastFromString::template Operation<string_t, T>(GetString(val), result, '.', strict);
 		break;
 	case YYJSON_TYPE_ARR | YYJSON_SUBTYPE_NONE:
 	case YYJSON_TYPE_OBJ | YYJSON_SUBTYPE_NONE:
@@ -90,16 +90,16 @@ static inline bool GetValueNumerical(yyjson_val *val, T &result, bool strict) {
 		break;
 	case YYJSON_TYPE_BOOL | YYJSON_SUBTYPE_TRUE:
 	case YYJSON_TYPE_BOOL | YYJSON_SUBTYPE_FALSE:
-		success = OP::template Operation<bool, T>(unsafe_yyjson_get_bool(val), result, strict);
+		success = TryCast::template Operation<bool, T>(unsafe_yyjson_get_bool(val), result, strict);
 		break;
 	case YYJSON_TYPE_NUM | YYJSON_SUBTYPE_UINT:
-		success = OP::template Operation<uint64_t, T>(unsafe_yyjson_get_uint(val), result, strict);
+		success = TryCast::template Operation<uint64_t, T>(unsafe_yyjson_get_uint(val), result, strict);
 		break;
 	case YYJSON_TYPE_NUM | YYJSON_SUBTYPE_SINT:
-		success = OP::template Operation<int64_t, T>(unsafe_yyjson_get_sint(val), result, strict);
+		success = TryCast::template Operation<int64_t, T>(unsafe_yyjson_get_sint(val), result, strict);
 		break;
 	case YYJSON_TYPE_NUM | YYJSON_SUBTYPE_REAL:
-		success = OP::template Operation<double, T>(unsafe_yyjson_get_real(val), result, strict);
+		success = TryCast::template Operation<double, T>(unsafe_yyjson_get_real(val), result, strict);
 		break;
 	default:
 		throw InternalException("Unknown yyjson tag in GetValueNumerical");
@@ -118,7 +118,7 @@ static inline bool GetValueDecimal(yyjson_val *val, T &result, uint8_t w, uint8_
 	case YYJSON_TYPE_NULL | YYJSON_SUBTYPE_NONE:
 		return false;
 	case YYJSON_TYPE_STR | YYJSON_SUBTYPE_NONE:
-		success = OP::template Operation<string_t, T>(GetString(val), result, &error_message, w, s);
+		success = TryCastStringToDecimal::template Operation<string_t, T>(GetString(val), result, &error_message, w, s, '.');
 		break;
 	case YYJSON_TYPE_ARR | YYJSON_SUBTYPE_NONE:
 	case YYJSON_TYPE_OBJ | YYJSON_SUBTYPE_NONE:

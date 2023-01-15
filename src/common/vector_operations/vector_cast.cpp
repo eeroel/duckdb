@@ -6,32 +6,33 @@
 namespace duckdb {
 
 bool VectorOperations::TryCast(CastFunctionSet &set, GetCastFunctionInput &input, Vector &source, Vector &result,
-                               idx_t count, string *error_message, bool strict) {
+                               idx_t count, string *error_message, bool strict, char decimal_separator) {
 	auto cast_function = set.GetCastFunction(source.GetType(), result.GetType(), input);
-	CastParameters parameters(cast_function.cast_data.get(), strict, error_message);
+	CastParameters parameters(cast_function.cast_data.get(), strict, error_message, decimal_separator);
 	return cast_function.function(source, result, count, parameters);
 }
 
-bool VectorOperations::DefaultTryCast(Vector &source, Vector &result, idx_t count, string *error_message, bool strict) {
+
+bool VectorOperations::DefaultTryCast(Vector &source, Vector &result, idx_t count, string *error_message, bool strict, char decimal_separator) {
 	CastFunctionSet set;
 	GetCastFunctionInput input;
-	return VectorOperations::TryCast(set, input, source, result, count, error_message, strict);
+	return VectorOperations::TryCast(set, input, source, result, count, error_message, strict, decimal_separator);
 }
 
-void VectorOperations::DefaultCast(Vector &source, Vector &result, idx_t count, bool strict) {
-	VectorOperations::DefaultTryCast(source, result, count, nullptr, strict);
+void VectorOperations::DefaultCast(Vector &source, Vector &result, idx_t count, bool strict, char decimal_separator) {
+	VectorOperations::DefaultTryCast(source, result, count, nullptr, strict, decimal_separator);
 }
 
 bool VectorOperations::TryCast(ClientContext &context, Vector &source, Vector &result, idx_t count,
-                               string *error_message, bool strict) {
+                               string *error_message, bool strict, char decimal_separator) {
 	auto &config = DBConfig::GetConfig(context);
 	auto &set = config.GetCastFunctions();
 	GetCastFunctionInput get_input(context);
-	return VectorOperations::TryCast(set, get_input, source, result, count, error_message, strict);
+	return VectorOperations::TryCast(set, get_input, source, result, count, error_message, strict, decimal_separator);
 }
 
-void VectorOperations::Cast(ClientContext &context, Vector &source, Vector &result, idx_t count, bool strict) {
-	VectorOperations::TryCast(context, source, result, count, nullptr, strict);
+void VectorOperations::Cast(ClientContext &context, Vector &source, Vector &result, idx_t count, bool strict, char decimal_separator) {
+	VectorOperations::TryCast(context, source, result, count, nullptr, strict, decimal_separator);
 }
 
 } // namespace duckdb

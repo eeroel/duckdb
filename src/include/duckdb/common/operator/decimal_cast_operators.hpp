@@ -16,10 +16,19 @@ namespace duckdb {
 // Decimal Casts
 //===--------------------------------------------------------------------===//
 struct TryCastToDecimal {
-	template <class SRC, class DST>
+
+    template <class SRC, class DST>
 	DUCKDB_API static inline bool Operation(SRC input, DST &result, string *error_message, uint8_t width,
 	                                        uint8_t scale) {
 		throw NotImplementedException("Unimplemented type for TryCastToDecimal!");
+	}
+};
+
+struct TryCastStringToDecimal {
+    template <class SRC, class DST>
+	DUCKDB_API static inline bool Operation(SRC input, DST &result, string *error_message, uint8_t width,
+	                                        uint8_t scale, char decimal_separator) {
+		throw NotImplementedException("Unimplemented type for TryCastStringToDecimal!");
 	}
 };
 
@@ -356,17 +365,17 @@ bool TryCastFromDecimal::Operation(hugeint_t input, double &result, string *erro
 // Cast Decimal <-> VARCHAR
 //===--------------------------------------------------------------------===//
 template <>
-DUCKDB_API bool TryCastToDecimal::Operation(string_t input, int16_t &result, string *error_message, uint8_t width,
-                                            uint8_t scale);
+DUCKDB_API bool TryCastStringToDecimal::Operation(string_t input, int16_t &result, string *error_message, uint8_t width,
+                                            uint8_t scale, char decimal_separator);
 template <>
-DUCKDB_API bool TryCastToDecimal::Operation(string_t input, int32_t &result, string *error_message, uint8_t width,
-                                            uint8_t scale);
+DUCKDB_API bool TryCastStringToDecimal::Operation(string_t input, int32_t &result, string *error_message, uint8_t width,
+                                            uint8_t scale, char decimal_separator);
 template <>
-DUCKDB_API bool TryCastToDecimal::Operation(string_t input, int64_t &result, string *error_message, uint8_t width,
-                                            uint8_t scale);
+DUCKDB_API bool TryCastStringToDecimal::Operation(string_t input, int64_t &result, string *error_message, uint8_t width,
+                                            uint8_t scale, char decimal_separator);
 template <>
-DUCKDB_API bool TryCastToDecimal::Operation(string_t input, hugeint_t &result, string *error_message, uint8_t width,
-                                            uint8_t scale);
+DUCKDB_API bool TryCastStringToDecimal::Operation(string_t input, hugeint_t &result, string *error_message, uint8_t width,
+                                            uint8_t scale, char decimal_separator);
 
 struct StringCastFromDecimal {
 	template <class SRC>

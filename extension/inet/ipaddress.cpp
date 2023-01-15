@@ -39,7 +39,7 @@ parse_number:
 		return IPAddressError(input, error_message, "Expected a number");
 	}
 	uint8_t number;
-	if (!TryCast::Operation<string_t, uint8_t>(string_t(data + start, c - start), number)) {
+	if (!TryCastFromString::Operation<string_t, uint8_t>(string_t(data + start, c - start), number, '.')) {
 		return IPAddressError(input, error_message, "Expected a number between 0 and 255");
 	}
 	address <<= 8;
@@ -72,7 +72,7 @@ parse_mask:
 		c++;
 	}
 	uint8_t mask;
-	if (!TryCast::Operation<string_t, uint8_t>(string_t(data + start, c - start), mask)) {
+	if (!TryCastFromString::Operation<string_t, uint8_t>(string_t(data + start, c - start), mask, '.')) {
 		return IPAddressError(input, error_message, "Expected a number between 0 and 32");
 	}
 	if (mask > 32) {

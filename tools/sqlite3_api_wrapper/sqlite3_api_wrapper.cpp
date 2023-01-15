@@ -1672,7 +1672,7 @@ double sqlite3_value_double(sqlite3_value *pVal) {
 	case SQLiteTypeValue::TEXT:
 	case SQLiteTypeValue::BLOB:
 		double res;
-		if (TryCast::Operation<string_t, double>(string_t(pVal->str), res)) {
+		if (TryCastFromString::Operation<string_t, double>(string_t(pVal->str), res, '.')) {
 			return res;
 		}
 		break;
@@ -1708,7 +1708,7 @@ sqlite3_int64 sqlite3_value_int64(sqlite3_value *pVal) {
 		break;
 	case SQLiteTypeValue::TEXT:
 	case SQLiteTypeValue::BLOB:
-		if (TryCast::Operation<string_t, int64_t>(string_t(pVal->str), res)) {
+		if (TryCastFromString::Operation<string_t, int64_t>(string_t(pVal->str), res, '.')) {
 			return res;
 		}
 		break;
