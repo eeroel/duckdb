@@ -91,7 +91,7 @@ bool BaseCSVReader::TryCastValue(const Value &value, const LogicalType &sql_type
 	} else {
 		Value new_value;
 		string error_message;
-		return value.DefaultTryCastAs(sql_type, new_value, &error_message, true, options.decimal_separator);
+		return value.DefaultTryCastAs(sql_type, new_value, &error_message, true, options.decimal_separator[0]);
 	}
 }
 
@@ -149,7 +149,7 @@ bool BaseCSVReader::TryCastVector(Vector &parse_chunk_col, idx_t size, const Log
 	} else {
 		// target type is not varchar: perform a cast
 		string error_message;
-		return VectorOperations::DefaultTryCast(parse_chunk_col, dummy_result, size, &error_message, true, options.decimal_separator);
+		return VectorOperations::DefaultTryCast(parse_chunk_col, dummy_result, size, &error_message, true, options.decimal_separator[0]);
 	}
 }
 
@@ -346,7 +346,7 @@ bool BaseCSVReader::Flush(DataChunk &insert_chunk, bool try_add_line) {
 			} else {
 				// target type is not varchar: perform a cast
 				success = VectorOperations::DefaultTryCast(parse_chunk.data[col_idx], insert_chunk.data[insert_idx],
-				                                           parse_chunk.size(), &error_message);
+				                                           parse_chunk.size(), &error_message, false, options.decimal_separator[0]);
 			}
 			if (success) {
 				continue;

@@ -21,7 +21,6 @@ struct BufferedCSVReaderOptions {
 	// CommonCSVOptions
 	//===--------------------------------------------------------------------===//
 
-	char decimal_separator = '.';
 	//! Whether or not a delimiter was defined by the user
 	bool has_delimiter = false;
 	//! Delimiter to separate columns within each line
@@ -88,7 +87,8 @@ struct BufferedCSVReaderOptions {
 	bool union_by_name = false;
 	//! Buffer Size (Parallel Scan)
 	idx_t buffer_size = CSVBuffer::INITIAL_BUFFER_SIZE_COLOSSAL;
-
+	//! Decimal separator when reading as numeric
+	string decimal_separator = ".";
 	//===--------------------------------------------------------------------===//
 	// WriteCSVOptions
 	//===--------------------------------------------------------------------===//

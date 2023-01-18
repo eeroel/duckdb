@@ -371,7 +371,7 @@ SQLRETURN duckdb::GetDataStmtResult(SQLHSTMT statement_handle, SQLUSMALLINT col_
 			string_t str_t(str_val.c_str(), width);
 			if (numeric->precision <= Decimal::MAX_WIDTH_INT64) {
 				int64_t val_i64;
-				if (!duckdb::TryCastFromString::Operation(str_t, val_i64)) {
+				if (!duckdb::TryCastFromString::Operation(str_t, val_i64, '.')) {
 					return SQL_ERROR;
 				}
 				memcpy(dataptr, &val_i64, sizeof(val_i64));

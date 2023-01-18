@@ -46,14 +46,21 @@ static void TestNumericCast(vector<SRC> &working_values, vector<SRC> &broken_val
 
 template <class DST>
 static void TestStringCast(vector<string> &working_values, vector<DST> &expected_values,
-                           vector<string> &broken_values) {
+                           vector<string> &broken_values, char decimal_separator) {
 	DST result;
 	for (idx_t i = 0; i < working_values.size(); i++) {
-		auto &value = working_values[i];
+		auto value = working_values[i];
 		auto expected_value = expected_values[i];
-		REQUIRE_NOTHROW(CastFromString::Operation<string_t, DST>(string_t(value)) == expected_value);
 
-		REQUIRE(TryCastFromString::Operation<string_t, DST>(string_t(value), result, '.'));
+		if (decimal_separator != '.') {
+			string sep;
+			sep += decimal_separator;
+			value = StringUtil::Replace(value, ".", sep);
+		}
+		
+		REQUIRE_NOTHROW(CastFromString::Operation<string_t, DST>(string_t(value), decimal_separator) == expected_value);
+
+		REQUIRE(TryCastFromString::Operation<string_t, DST>(string_t(value), result, decimal_separator));
 		REQUIRE(result == expected_value);
 
 		StringUtil::Trim(value);
@@ -62,17 +69,17 @@ static void TestStringCast(vector<string> &working_values, vector<DST> &expected
 		if (splits.size() > 1 || value[0] == '+') {
 			continue;
 		}
-		splits = StringUtil::Split(value, '.');
+		splits = StringUtil::Split(value, decimal_separator);
 		REQUIRE(ConvertToString::Operation<DST>(result) == splits[0]);
 	}
 	for (auto &value : broken_values) {
 		REQUIRE_THROWS(Cast::Operation<string_t, DST>(string_t(value)));
-		REQUIRE(!TryCastFromString::Operation<string_t, DST>(string_t(value), result, '.'));
+		REQUIRE(!TryCastFromString::Operation<string_t, DST>(string_t(value), result, decimal_separator));
 	}
 }
 
 template <class T>
-static void TestExponent() {
+static void TestExponent(char decimal_separator) {
 	T parse_result;
 	string str;
 	double value = 1;
@@ -81,10 +88,10 @@ static void TestExponent() {
 		if (value < (double)NumericLimits<T>::Maximum()) {
 			// expect success
 			str = "1e" + to_string(exponent);
-			REQUIRE(TryCastFromString::Operation<string_t, T>(string_t(str), parse_result, '.'));
+			REQUIRE(TryCastFromString::Operation<string_t, T>(string_t(str), parse_result, decimal_separator));
 			REQUIRE(parse_result == expected_value);
 			str = "-1e" + to_string(exponent);
-			REQUIRE(TryCastFromString::Operation<string_t, T>(string_t(str), parse_result, '.'));
+			REQUIRE(TryCastFromString::Operation<string_t, T>(string_t(str), parse_result, decimal_separator));
 			REQUIRE(parse_result == -expected_value);
 			value *= 10;
 			// check again because otherwise this overflows
@@ -94,9 +101,9 @@ static void TestExponent() {
 		} else {
 			// expect failure
 			str = "1e" + to_string(exponent);
-			REQUIRE(!TryCastFromString::Operation<string_t, T>(string_t(str), parse_result, '.'));
+			REQUIRE(!TryCastFromString::Operation<string_t, T>(string_t(str), parse_result, decimal_separator));
 			str = "-1e" + to_string(exponent);
-			REQUIRE(!TryCastFromString::Operation<string_t, T>(string_t(str), parse_result, '.'));
+			REQUIRE(!TryCastFromString::Operation<string_t, T>(string_t(str), parse_result, decimal_separator));
 		}
 	}
 }
@@ -105,18 +112,24 @@ TEST_CASE("Test casting to boolean", "[cast]") {
 	vector<string> working_values = {"true", "false", "TRUE", "FALSE", "T", "F", "1", "0", "False", "True"};
 	vector<bool> expected_values = {true, false, true, false, true, false, true, false, false, true};
 	vector<string> broken_values = {"304", "1002", "blabla", "", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaa"};
+	
+	vector<char> decimal_separators = {'.', ','};
 
 	bool result;
-	for (idx_t i = 0; i < working_values.size(); i++) {
-		auto &value = working_values[i];
-		auto expected_value = expected_values[i];
-		REQUIRE_NOTHROW(CastFromString::Operation<string_t, bool>(value) == expected_value);
-		REQUIRE(TryCastFromString::Operation<string_t, bool>(value, result, '.'));
-		REQUIRE(result == expected_value);
-	}
-	for (auto &value : broken_values) {
-		REQUIRE_THROWS(CastFromString::Operation<string_t, bool>(value));
-		REQUIRE(!TryCastFromString::Operation<string_t, bool>(value, result, '.'));
+	for (idx_t j = 0; j < decimal_separators.size(); j++) {
+		auto decimal_separator = decimal_separators[j];
+		for (idx_t i = 0; i < working_values.size(); i++) {
+			auto value = working_values[i];
+			auto expected_value = expected_values[i];
+
+			REQUIRE_NOTHROW(CastFromString::Operation<string_t, bool>(value, decimal_separator) == expected_value);
+			REQUIRE(TryCastFromString::Operation<string_t, bool>(value, result, decimal_separator));
+			REQUIRE(result == expected_value);
+		}
+		for (auto &value : broken_values) {
+			REQUIRE_THROWS(CastFromString::Operation<string_t, bool>(value, decimal_separator));
+			REQUIRE(!TryCastFromString::Operation<string_t, bool>(value, result, decimal_separator));
+		}
 	}
 }
 
@@ -159,9 +172,15 @@ TEST_CASE("Test casting to int8_t", "[cast]") {
 	                                    "1000e-1",
 	                                    " 3 2",
 	                                    "+"};
-	TestStringCast<int8_t>(working_values_str, expected_values_str, broken_values_str);
-	TestExponent<int8_t>();
+	vector<char> decimal_separators = {'.', ','};
+
+	for (idx_t i = 0; i < decimal_separators.size(); i++) {
+		auto decimal_separator = decimal_separators[i];
+		TestStringCast<int8_t>(working_values_str, expected_values_str, broken_values_str, decimal_separator);
+		TestExponent<int8_t>(decimal_separator);
+	}
 }
+
 
 TEST_CASE("Test casting to int16_t", "[cast]") {
 	// int32_t -> int16_t
@@ -188,8 +207,14 @@ TEST_CASE("Test casting to int16_t", "[cast]") {
 	    "aaaa",  "19A",         "",
 	    "1.A",   "1e",          "1e-",
 	    "1e100", "1e100000000", "+"};
-	TestStringCast<int16_t>(working_values_str, expected_values_str, broken_values_str);
-	TestExponent<int16_t>();
+
+		vector<char> decimal_separators = {'.', ','};
+
+	for (idx_t i = 0; i < decimal_separators.size(); i++) {
+		auto decimal_separator = decimal_separators[i];
+		TestStringCast<int16_t>(working_values_str, expected_values_str, broken_values_str, decimal_separator);
+		TestExponent<int16_t>(decimal_separator);
+	}
 }
 
 TEST_CASE("Test casting to int32_t", "[cast]") {
@@ -212,8 +237,14 @@ TEST_CASE("Test casting to int32_t", "[cast]") {
 	    "2147483648", "-2147483649", "10000000000000000000000000000000000000000000000000000000000000",
 	    "aaaa",       "19A",         "",
 	    "1.A",        "1e1e1e1"};
-	TestStringCast<int32_t>(working_values_str, expected_values_str, broken_values_str);
-	TestExponent<int32_t>();
+	
+	vector<char> decimal_separators = {'.', ','};
+
+	for (idx_t i = 0; i < decimal_separators.size(); i++) {
+		auto decimal_separator = decimal_separators[i];
+		TestStringCast<int32_t>(working_values_str, expected_values_str, broken_values_str, decimal_separator);
+		TestExponent<int32_t>(decimal_separator);
+	}
 }
 
 TEST_CASE("Test casting to int64_t", "[cast]") {
@@ -260,28 +291,50 @@ TEST_CASE("Test casting to int64_t", "[cast]") {
 	                                    "1e+1+1",
 	                                    "1e+1-1",
 	                                    "+"};
-	TestStringCast<int64_t>(working_values_str, expected_values_str, broken_values_str);
-	TestExponent<int64_t>();
+	vector<char> decimal_separators = {'.', ','};
+
+	for (idx_t i = 0; i < decimal_separators.size(); i++) {
+		auto decimal_separator = decimal_separators[i];
+		TestStringCast<int64_t>(working_values_str, expected_values_str, broken_values_str, decimal_separator);
+		TestExponent<int64_t>(decimal_separator);
+	}
 }
 
 template <class DST>
 static void TestStringCastDouble(vector<string> &working_values, vector<DST> &expected_values,
-                                 vector<string> &broken_values) {
+                                 vector<string> &broken_values, char decimal_separator) {
 	DST result;
 	for (idx_t i = 0; i < working_values.size(); i++) {
-		auto &value = working_values[i];
+		auto value = working_values[i];
 		auto expected_value = expected_values[i];
-		REQUIRE_NOTHROW(CastFromString::Operation<string_t, DST>(string_t(value)) == expected_value);
-		REQUIRE(TryCastFromString::Operation<string_t, DST>(string_t(value), result, '.'));
+
+		if (decimal_separator != '.') {
+			string sep;
+			sep += decimal_separator;
+			value = StringUtil::Replace(value, ".", sep);
+		}
+
+		REQUIRE_NOTHROW(CastFromString::Operation<string_t, DST>(string_t(value), decimal_separator) == expected_value);
+		REQUIRE(TryCastFromString::Operation<string_t, DST>(string_t(value), result, decimal_separator));
 		REQUIRE(ApproxEqual(result, expected_value));
 
-		auto to_str_and_back =
-		    CastFromString::Operation<string_t, DST>(string_t(ConvertToString::Operation<DST>(expected_value)));
-		REQUIRE(ApproxEqual(to_str_and_back, expected_value));
+		// test roundtrip casting only for period decimal separator, as decimal separators
+		// are not supported for writing
+		if (decimal_separator == '.') {
+			auto to_str_and_back =
+				CastFromString::Operation<string_t, DST>(string_t(ConvertToString::Operation<DST>(expected_value)), decimal_separator);
+			REQUIRE(ApproxEqual(to_str_and_back, expected_value));
+		}
 	}
 	for (auto &value : broken_values) {
+		if (decimal_separator != '.') {
+			string sep;
+			sep += decimal_separator;
+			value = StringUtil::Replace(value, ".", sep);
+		}
+
 		REQUIRE_THROWS(Cast::Operation<string_t, DST>(string_t(value)));
-		REQUIRE(!TryCastFromString::Operation<string_t, DST>(string_t(value), result, '.'));
+		REQUIRE(!TryCastFromString::Operation<string_t, DST>(string_t(value), result, decimal_separator));
 	}
 }
 
@@ -298,7 +351,12 @@ TEST_CASE("Test casting to float", "[cast]") {
 	    "12aaa", "1e10e10", "1e",
 	    "1e-",   "1e10a",   "1.1781237378938173987123987123981723981723981723934834583490587123w",
 	    "1.2.3"};
-	TestStringCastDouble<float>(working_values, expected_values, broken_values);
+	vector<char> decimal_separators = {'.', ','};
+
+	for (idx_t i = 0; i < decimal_separators.size(); i++) {
+		auto decimal_separator = decimal_separators[i];
+		TestStringCastDouble<float>(working_values, expected_values, broken_values, decimal_separator);
+	}
 }
 
 TEST_CASE("Test casting to double", "[cast]") {
@@ -327,5 +385,10 @@ TEST_CASE("Test casting to double", "[cast]") {
 	    "1.2.3", "1.222.",  "1..",
 	    "1 . 2", "1. 2",    "1.2 e20",
 	    "+"};
-	TestStringCastDouble<double>(working_values, expected_values, broken_values);
+	vector<char> decimal_separators = {'.', ','};
+
+	for (idx_t i = 0; i < decimal_separators.size(); i++) {
+		auto decimal_separator = decimal_separators[i];
+		TestStringCastDouble<double>(working_values, expected_values, broken_values, decimal_separator);
+	}
 }

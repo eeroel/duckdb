@@ -421,9 +421,9 @@ struct TryCastFromString {
 
 struct CastFromString {
 	template <class SRC, class DST>
-	static inline DST Operation(SRC input) {
+	static inline DST Operation(SRC input, char decimal_separator) {
 		DST result;
-		if (!TryCastFromString::Operation(input, result, '.')) {
+		if (!TryCastFromString::Operation(input, result, decimal_separator)) {
 			throw InvalidInputException(CastExceptionText<SRC, DST>(input));
 		}
 		return result;

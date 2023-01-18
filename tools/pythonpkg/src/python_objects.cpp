@@ -150,7 +150,7 @@ static Value CastToDouble(py::handle &obj) {
 	string converted = py::str(obj);
 	string_t decimal_string(converted);
 	double double_val;
-	bool try_cast = TryCastFromString::Operation<string_t, double>(decimal_string, double_val, true);
+	bool try_cast = TryCastFromString::Operation<string_t, double>(decimal_string, double_val, '.', true);
 	(void)try_cast;
 	D_ASSERT(try_cast);
 	return Value::DOUBLE(double_val);

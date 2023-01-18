@@ -670,6 +670,7 @@ static void ReadCSVAddNamedParameters(TableFunction &table_function) {
 	table_function.named_parameters["ignore_errors"] = LogicalType::BOOLEAN;
 	table_function.named_parameters["union_by_name"] = LogicalType::BOOLEAN;
 	table_function.named_parameters["buffer_size"] = LogicalType::UBIGINT;
+	table_function.named_parameters["decimal_separator"] = LogicalType::VARCHAR;
 }
 
 double CSVReaderProgress(ClientContext &context, const FunctionData *bind_data_p,
@@ -747,6 +748,7 @@ void BufferedCSVReaderOptions::Serialize(FieldWriter &writer) const {
 	writer.WriteString(file_path);
 	writer.WriteField<bool>(include_file_name);
 	writer.WriteField<bool>(include_parsed_hive_partitions);
+	writer.WriteString(decimal_separator);
 	// write options
 	writer.WriteListNoReference<bool>(force_quote);
 }
@@ -779,6 +781,7 @@ void BufferedCSVReaderOptions::Deserialize(FieldReader &reader) {
 	file_path = reader.ReadRequired<string>();
 	include_file_name = reader.ReadRequired<bool>();
 	include_parsed_hive_partitions = reader.ReadRequired<bool>();
+	decimal_separator = reader.ReadRequired<string>();
 	// write options
 	force_quote = reader.ReadRequiredList<bool>();
 }
