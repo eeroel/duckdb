@@ -23,8 +23,6 @@ struct ToCDecimalCastWrapper {
 	}
 };
 
-
-
 //! Hugeint
 template <>
 struct ToCDecimalCastWrapper<hugeint_t> {
@@ -63,7 +61,6 @@ struct ToCDecimalCastWrapper<hugeint_t> {
 		return true;
 	}
 };
-
 
 //! FIXME: reduce duplication here by just matching on the signed-ness of the type
 //! INTERNAL_TYPE = int16_t
@@ -107,8 +104,6 @@ struct ToCDecimalCastWrapper<int16_t> {
 		return true;
 	}
 };
-
-
 //! INTERNAL_TYPE = int32_t
 template <>
 struct ToCDecimalCastWrapper<int32_t> {
@@ -151,7 +146,6 @@ struct ToCDecimalCastWrapper<int32_t> {
 		return true;
 	}
 };
-
 //! INTERNAL_TYPE = int64_t
 template <>
 struct ToCDecimalCastWrapper<int64_t> {

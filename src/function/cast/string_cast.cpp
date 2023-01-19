@@ -102,10 +102,8 @@ static BoundCastInfo VectorStringCastNumericSwitch(BindCastInput &input, const L
 	case LogicalTypeId::HUGEINT:
 		return BoundCastInfo(&VectorCastHelpers::StringToNumericCast<string_t, hugeint_t>);
 	case LogicalTypeId::FLOAT:
-		//return BoundCastInfo(&VectorCastHelpers::TryCastStrictLoop<string_t, float, duckdb::TryCast>);
 		return BoundCastInfo(&VectorCastHelpers::StringToNumericCast<string_t, float>);
 	case LogicalTypeId::DOUBLE:
-		//return BoundCastInfo(&VectorCastHelpers::TryCastStrictLoop<string_t, double, duckdb::TryCast>);
 		return BoundCastInfo(&VectorCastHelpers::StringToNumericCast<string_t, double>);
 	case LogicalTypeId::INTERVAL:
 		return BoundCastInfo(&VectorCastHelpers::TryCastErrorLoop<string_t, interval_t, duckdb::TryCastErrorMessage>);

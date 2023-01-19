@@ -1152,7 +1152,6 @@ template <>
 bool TryCastFromString::Operation(string_t input, int64_t &result, char decimal_separator, bool strict) {
 	return TrySimpleIntegerCast<int64_t>(input.GetDataUnsafe(), input.GetSize(), result, decimal_separator, strict);
 }
-
 template <>
 bool TryCastFromString::Operation(string_t input, uint8_t &result, char decimal_separator, bool strict) {
 	return TrySimpleIntegerCast<uint8_t, false>(input.GetDataUnsafe(), input.GetSize(), result, decimal_separator, strict);
@@ -1169,11 +1168,6 @@ template <>
 bool TryCastFromString::Operation(string_t input, uint64_t &result, char decimal_separator, bool strict) {
 	return TrySimpleIntegerCast<uint64_t, false>(input.GetDataUnsafe(), input.GetSize(), result, decimal_separator, strict);
 }
-/*template <>
-bool TryCastFromString::Operation(string_t input, string_t &result, char decimal_separator, bool strict) {
-	result = input;
-	return true;
-}*/
 
 template <class T>
 static bool TryDoubleCast(const char *buf, idx_t len, T &result, char decimal_separator, bool strict) {

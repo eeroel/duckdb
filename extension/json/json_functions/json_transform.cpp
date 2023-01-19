@@ -75,7 +75,7 @@ static inline string_t GetString(yyjson_val *val) {
 	return string_t(unsafe_yyjson_get_str(val), unsafe_yyjson_get_len(val));
 }
 
-template <class T>
+template <class T, class OP = TryCast>
 static inline bool GetValueNumerical(yyjson_val *val, T &result, bool strict) {
 	bool success;
 	switch (yyjson_get_tag(val)) {
@@ -90,16 +90,16 @@ static inline bool GetValueNumerical(yyjson_val *val, T &result, bool strict) {
 		break;
 	case YYJSON_TYPE_BOOL | YYJSON_SUBTYPE_TRUE:
 	case YYJSON_TYPE_BOOL | YYJSON_SUBTYPE_FALSE:
-		success = TryCast::template Operation<bool, T>(unsafe_yyjson_get_bool(val), result, strict);
+		success = OP::template Operation<bool, T>(unsafe_yyjson_get_bool(val), result, strict);
 		break;
 	case YYJSON_TYPE_NUM | YYJSON_SUBTYPE_UINT:
-		success = TryCast::template Operation<uint64_t, T>(unsafe_yyjson_get_uint(val), result, strict);
+		success = OP::template Operation<uint64_t, T>(unsafe_yyjson_get_uint(val), result, strict);
 		break;
 	case YYJSON_TYPE_NUM | YYJSON_SUBTYPE_SINT:
-		success = TryCast::template Operation<int64_t, T>(unsafe_yyjson_get_sint(val), result, strict);
+		success = OP::template Operation<int64_t, T>(unsafe_yyjson_get_sint(val), result, strict);
 		break;
 	case YYJSON_TYPE_NUM | YYJSON_SUBTYPE_REAL:
-		success = TryCast::template Operation<double, T>(unsafe_yyjson_get_real(val), result, strict);
+		success = OP::template Operation<double, T>(unsafe_yyjson_get_real(val), result, strict);
 		break;
 	default:
 		throw InternalException("Unknown yyjson tag in GetValueNumerical");
